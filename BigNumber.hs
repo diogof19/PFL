@@ -64,9 +64,9 @@ somaBN :: BigNumber -> BigNumber -> BigNumber
 somaBN EmptyList EmptyList = EmptyList
 -- Caso Lista Acabou e Numero Positivo
 somaBN EmptyList (BN x bn) = removeZeros $ somaBN (BN x bn) EmptyList
-somaBN (BN x bn) EmptyList
-  | x == 0 = EmptyList
-  | otherwise = (BN x bn)
+somaBN (BN x bn) EmptyList = (BN x bn)
+--  | x == 0 = EmptyList
+--  | otherwise = (BN x bn)
 -- Caso Dois Numeros Negativos
 somaBN (Negative bnx) (Negative bny) = removeZeros $ Negative (somaBN bnx bny)
 -- Caso Numero Positivo e Numero Negativo
@@ -110,6 +110,37 @@ subBN (BN x bnx) (BN y bny)
   | isGreaterBN (BN x bnx) (BN y bny) && x >= y = removeZeros $ (BN (x-y) (subBN bnx bny))
   | otherwise = removeZeros $ Negative (subBN (BN y bny) (BN x bnx))
 
+
+-- mulBN
+
+
+-- output (mulBN (scanner "1") (scanner "0")) = "0"
+-- output (mulBN (scanner "12") (scanner "0")) = ""
+-- output (mulBN (scanner "123") (scanner "0")) = "0"
+-- output (mulBN (scanner "1234") (scanner "0")) = ""
+
+mulBN :: BigNumber -> BigNumber -> BigNumber
+mulBN EmptyList EmptyList = EmptyList
+mulBN (BN x bnx) EmptyList = removeZeros $ BN x bnx
+mulBN EmptyList (BN x bnx) = removeZeros $ BN x bnx
+mulBN (Negative bnx) (Negative bny) = mulBN bnx bny
+mulBN (Negative bnx) (BN y bny) = Negative (mulBN bnx (BN y bny))
+mulBN (BN x bnx) (Negative bny) = Negative (mulBN (BN x bnx) bny)
+mulBN (BN x bnx) (BN y bny) = removeZeros $ mulBNAux (BN x bnx) 0 (BN y bny)
+
+mulBNAux :: BigNumber -> Int -> BigNumber -> BigNumber
+mulBNAux EmptyList i (BN y bny) = EmptyList
+mulBNAux (BN x bnx) i (BN y bny) = somaBN (mulBNHelper x i (BN y bny) 0) (mulBNAux bnx (i+1) (BN y bny))
+
+-- output (somaBN (mulBNHelper 5 0 (scanner "123") 0) (mulBNHelper 4 1 (scanner "123") 0)) = "5535"
+
+mulBNHelper :: Int -> Int -> BigNumber -> Int -> BigNumber
+mulBNHelper _ _ EmptyList c
+  | c == 0 = EmptyList
+  | otherwise = (BN c EmptyList)
+mulBNHelper x i (BN y bny) c
+  | (i > 0) = (BN 0 (mulBNHelper x (i-1) (BN y bny) c))
+  | otherwise = (BN ((mod (x*y) 10) + c) (mulBNHelper x i bny (div (x*y) 10)))
 
 ----------------------
 -- Helper Functions --
