@@ -1,8 +1,10 @@
+module BigNumber (BigNumber (..),
+scanner, output, somaBN, subBN, mulBN, divBN, safeDivBN, oneBN, zeroBN, fromBigNumber) where
 
 -- Imports
 
 import Data.Char
-
+import Data.Maybe
 
 -- Constructor
 
@@ -10,6 +12,9 @@ import Data.Char
 -- Pensei assim: data BigNumber = EmptyList | Negative BigNumber | BN Int BigNumber e usava Negative na primeira/ultima posiçao
 -- Ou entao usava-se na primeira /ultima posiçao um numero negativo
 -- Como quiseres
+
+
+
 
 data BigNumber = EmptyList | Negative BigNumber | BN Int BigNumber deriving (Show)
 
@@ -57,7 +62,6 @@ outputHelper (BN a bn) str = outputHelper bn (chr (a + ord '0') : str)
 -- Teste #8:  output (somaBN (scanner "146") (scanner "-24")) = "122"
 
 
--- TO DO: Negative + BN
 
 somaBN :: BigNumber -> BigNumber -> BigNumber
 -- Caso Lista Acabou
@@ -65,8 +69,6 @@ somaBN EmptyList EmptyList = EmptyList
 -- Caso Lista Acabou e Numero Positivo
 somaBN EmptyList (BN x bn) = removeZeros $ somaBN (BN x bn) EmptyList
 somaBN (BN x bn) EmptyList = (BN x bn)
---  | x == 0 = EmptyList
---  | otherwise = (BN x bn)
 -- Caso Dois Numeros Negativos
 somaBN (Negative bnx) (Negative bny) = removeZeros $ Negative (somaBN bnx bny)
 -- Caso Numero Positivo e Numero Negativo
@@ -76,7 +78,7 @@ somaBN (Negative bnx) (BN y bny)
 somaBN (BN x bnx) (Negative bny) = removeZeros $ somaBN (Negative bny) (BN x bnx)
 -- Caso Dois Numeros Positivos
 somaBN (BN x bnx) (BN y bny)
-  | ((x + y) < 10 && (x + y) > 0) = removeZeros $ (BN (mod (x+y) 10) (somaBN bnx bny))
+  | ((x + y) < 10 && (x + y) >= 0) = removeZeros $ (BN (mod (x+y) 10) (somaBN bnx bny))
   | (x + y) >= 10 = removeZeros $ (BN (mod (x+y) 10) (somaBN (somaBN bnx bny) (BN (div (x+y) 10) EmptyList)))
   | otherwise = EmptyList
 
@@ -115,9 +117,11 @@ subBN (BN x bnx) (BN y bny)
 
 
 -- output (mulBN (scanner "1") (scanner "0")) = "0"
--- output (mulBN (scanner "12") (scanner "0")) = ""
--- output (mulBN (scanner "123") (scanner "0")) = "0"
--- output (mulBN (scanner "1234") (scanner "0")) = ""
+-- output (mulBN (scanner "12") (scanner "0")) = "0"
+-- output (mulBN (scanner "123") (scanner "123")) = "15129"
+-- output (mulBN (scanner "-123") (scanner "123")) = "-15129"
+-- output (mulBN (scanner "-999") (scanner "-999")) = "998001"
+
 
 mulBN :: BigNumber -> BigNumber -> BigNumber
 mulBN EmptyList EmptyList = EmptyList
@@ -142,34 +146,65 @@ mulBNHelper x i (BN y bny) c
   | (i > 0) = (BN 0 (mulBNHelper x (i-1) (BN y bny) c))
   | otherwise = (BN ((mod (x*y) 10) + c) (mulBNHelper x i bny (div (x*y) 10)))
 
+
+-- divBN (scanner "123456") (scanner "12") = (BN 8 (BN 8 (BN 2 (BN 0 (BN 1 EmptyList)))),BN 0 EmptyList)
+-- divBN (scanner "12345") (scanner "12")
+
+divBN :: BigNumber -> BigNumber -> (BigNumber, BigNumber)
+divBN _ (BN 0 EmptyList) = error "Division 0"
+divBN (BN x bnx) (BN y bny) = divBNHelper (flipBN (BN x bnx)) (BN y bny) (BN 0 EmptyList) (BN 0 EmptyList)
+
+
+divBNHelper :: BigNumber -> BigNumber -> BigNumber -> BigNumber -> (BigNumber, BigNumber)
+divBNHelper EmptyList (BN y bny) (BN q bnq) (BN r bnr) 
+  | isGreaterBN (BN y bny) (BN r bnr)  = ((BN q bnq), (BN r bnr))
+  | otherwise = ( removeZeros $ somaBN (exp10BN (BN q bnq) 1) quoc, removeZeros rest)
+  where (quoc, rest) = divBNinitial (BN y bny) oneBN (BN r bnr)
+divBNHelper (BN x bnx) (BN y bny) (BN q bnq) (BN r bnr) = 
+  divBNHelper bnx (BN y bny) (removeZeros $ somaBN quoc (exp10BN (BN q bnq) 1)) (removeZeros $ somaBN (exp10BN rest 1) (BN x EmptyList))
+  where (quoc, rest) = divBNinitial (BN y bny) oneBN (BN r bnr)
+
+-- divBNinitial (scanner "12") (scanner "1") (scanner "115")
+
+divBNinitial :: BigNumber -> BigNumber -> BigNumber -> (BigNumber, BigNumber)
+divBNinitial (BN x bnx) (BN i bni) (BN y bny) 
+  | isEqualBN multi (BN y bny) = ((BN i bni), subBN (BN y bny) multi)
+  | isGreaterBN multi (BN y bny) = ((subBN (BN i bni) oneBN), (subBN (BN y bny) (mulBN (BN x bnx) (subBN (BN i bni) oneBN))))
+  | otherwise = divBNinitial (BN x bnx) (somaBN (BN i bni) oneBN) (BN y bny)
+  where multi = mulBN (BN x bnx) (BN i bni)
+
+
+-- safeDivBN 
+
+
+safeDivBN :: BigNumber -> BigNumber -> Maybe (BigNumber, BigNumber)
+safeDivBN (BN x bnx) (BN 0 EmptyList) = Nothing
+safeDivBN (BN x bnx) (BN y bny) = Just $ divBN (BN x bnx) (BN y bny) 
+
+
+
 ----------------------
 -- Helper Functions --
 ----------------------
 
--- absBN -> Estado: Feito
---      Gives the absolute number of BigNumber
 
--- Teste #1: output(absBN(scanner("123"))) = "123"
--- Teste #2: output(absBN(scanner("-123"))) = "123"
+--
 
-absBN :: BigNumber -> BigNumber
-absBN EmptyList = EmptyList
-absBN (Negative bn) = bn
-absBN bn = bn
+oneBN :: BigNumber 
+oneBN = (BN 1 EmptyList)
+
+zeroBN :: BigNumber 
+zeroBN = (BN 0 EmptyList)
 
 
--- isNegativeBN -> Estado: Feito
---    Return True if it is Negative, false otherwise
 
+exp10BN :: BigNumber -> Int -> BigNumber
+exp10BN (BN x bnx) 0 = (BN x bnx)
+exp10BN (Negative bn) i = Negative (exp10BN bn i)
+exp10BN (BN x bnx) i = exp10BN (BN 0 (BN x bnx)) (i-1)
 
--- Teste #1: isNegativeBN(scanner("-123")) = True
--- Teste #2: isNegativeBN(scanner("123")) = False
--- Teste #3: isNegativeBN(EmptyList) = False
-
-isNegativeBN :: BigNumber -> Bool
-isNegativeBN (Negative bn) = True
-isNegativeBN _ = False
-
+outputDiv :: (BigNumber, BigNumber) -> (String, String)
+outputDiv ((BN x bnx), (BN y bny)) = (output (BN x bnx), output (BN y bny))
 
 -- isEqualBN
 
@@ -273,3 +308,13 @@ removeZerosAux EmptyList = EmptyList
 removeZerosAux (BN x bnx)
   | (x == 0 && lengthBN(BN x bnx) > 1) = removeZerosAux bnx
   | otherwise = BN x bnx
+
+
+
+
+fromBigNumber :: BigNumber -> Int
+fromBigNumber (BN x bnx) = fromBigNumberHelper (flipBN (BN x bnx))
+
+fromBigNumberHelper :: BigNumber -> Int 
+fromBigNumberHelper (BN x EmptyList) = x
+fromBigNumberHelper (BN x bnx) = x * (10 ^ (lengthBN bnx)) + fromBigNumberHelper bnx
