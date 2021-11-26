@@ -6,39 +6,61 @@ scanner, output, somaBN, subBN, mulBN, divBN, safeDivBN, oneBN, zeroBN, fromBigN
 import Data.Char
 import Data.Maybe
 
--- Constructor
+{-
+-> Constructores
+  -> EmptyList : Representa quando a lista está vazia ou o fim da lista
+  -> Negative BigNumber : Representa os números negativos. Tem o construtor Negative no ínicio seguido do número BigNumber
+  -> BN Int BigNumber : Representa os números positivos. Int: valor inteiro do algarismo
 
--- Ideia a pensar: como fazer números negativos
--- Pensei assim: data BigNumber = EmptyList | Negative BigNumber | BN Int BigNumber e usava Negative na primeira/ultima posiçao
--- Ou entao usava-se na primeira /ultima posiçao um numero negativo
--- Como quiseres
+-}
+data BigNumber = EmptyList | Negative BigNumber | BN Int BigNumber -- deriving (Show)
 
+{-
 
+-> Scanner -> Estado: Feito
+  -> Função que serve para transformar String em BigNumber
+  -> scanner "" -> Caso de lista vazia
+  -> scanner xs -> Chama uma função auxiliar que nos vai auxiliar
 
+-> scannerHelper -> Estado: Feito
+  -> Função auxiliar que tranforma String em BigNumber
+  -> scannerHelper "" (BN x bn) -> Caso base: caso nao tenha nada na string
+  -> scannerHelper (c: xs) a -> Caso recursivo: Transforma Char -> Int para cada algarismo
 
-data BigNumber = EmptyList | Negative BigNumber | BN Int BigNumber deriving (Show)
+-> Teste #1 : scanner "123" = BN 3 (BN 2 (BN 1 EmptyList)) quando usado com "deriving Show"
+-> Teste #2 : scanner "-123" = Negative (BN 3 (BN 2 (BN 1 EmptyList)))
+-> Teste #3 : scanner "" = EmptyList
 
--- Scanner -> Estado: Feito
--- Melhor usar na ordem inversa
---      Quando fizermos as operações, começamos pelo ultimo digito devido ao carry
-
--- Teste #1 : scanner "123" = BN 3 (BN 2 (BN 1 EmptyList)) quando usado com "deriving Show"
--- Teste #2 : scanner "-123" = Negative (BN 3 (BN 2 (BN 1 EmptyList)))
+-}
 
 scanner :: String -> BigNumber
 scanner "" = EmptyList
 scanner xs = scannerHelper xs EmptyList
 
 scannerHelper :: String -> BigNumber -> BigNumber
-scannerHelper "" (BN x bn) = BN x bn
+scannerHelper "" (BN x bn) = (BN x bn)
 scannerHelper (c: xs) a
         | c == '-' = Negative (scannerHelper xs a)
         | otherwise = scannerHelper xs (BN (ord c - ord '0') a)
 
--- Output -> Estado: Feito
+{-
 
--- Teste #1 : output (scanner "123") = "123"
--- Teste #2 : output (scanner "-123") = "-123"
+-> Output -> Estado: Feito
+  -> Função que serve para transformar BigNumber em String
+  -> output EmptyList -> Caso de Lista Vazia
+  -> output (Negative bn) -> Caso do número negativo, chama a função auxiliar com o valor positivo
+  -> output (BN a bn)  ->  Caso do número positivo, chama função auxiliar 
+
+-> outputHelper -> Estado: Feito
+  -> Funçao auxiliar que transforma BigNumber em String
+  -> outputHelper EmptyList str -> Caso base: Lista Vazia
+  -> outputHelper (BN a bn) str -> Caso recursivo: Transforma Int -> Char para cada algarismo
+
+-> Teste #1 : output (scanner "123") = "123"
+-> Teste #2 : output (scanner "-123") = "-123"
+-> Teste #3 : output (EmptyList) = ""
+
+-}
 
 output :: BigNumber -> String
 output EmptyList = ""
@@ -47,43 +69,72 @@ output (BN a bn) = outputHelper (BN a bn) ""
 
 outputHelper :: BigNumber -> String -> String
 outputHelper EmptyList str = str
-outputHelper (Negative n) str = '-' : str
 outputHelper (BN a bn) str = outputHelper bn (chr (a + ord '0') : str)
 
+{-
+-> somaBN -> Estado: Feito
+  -> Função que soma dois BigNumbers. Reduz sempre a uma das formas mais simples: soma de dois números positivos ou subtração de dois númeors positivos
+  -> somaBN EmptyList EmptyList 
+    -> Caso Lista Acabou
+  -> somaBN EmptyList (BN x bn) 
+  -> somaBN (BN x bn) EmptyList
+    -> Caso Lista Acabou e Número Positivo: Dá o número positivo
+  -> somaBN (Negative bnx) (Negative bny)
+    -> Caso Dois Números Negativos: É o simétrico da soma dos valores absolutos
+  -> somaBN (Negative bnx) (BN y bny)
+  -> somaBN (BN x bnx) (Negative bny)
+    -> Caso Número Negativo e Número Positivo: É a subtração entre os dois números
+  -> somaBN (BN x bnx) (BN y bny)
+    -> Caso Dois Números Positivos: Soma algarismo a algarismo
 
--- SomaBN
--- Teste #1:  output (somaBN (scanner "123") (scanner "123")) = "246"
--- Teste #2:  output (somaBN (scanner "123") (scanner "12")) = "135"
--- Teste #3:  output (somaBN (scanner "123") (scanner "987")) = "1110"
--- Teste #4:  output (somaBN (scanner "-123") (scanner "-987")) = "-1110"
--- Teste #5:  output (somaBN (scanner "-123") (scanner "22")) = "-101"
--- Teste #6:  output (somaBN (scanner "-123") (scanner "222")) = "99"
--- Teste #7:  output (somaBN (scanner "146") (scanner "-242")) = "-96"
--- Teste #8:  output (somaBN (scanner "146") (scanner "-24")) = "122"
+-> Teste #1:  output (somaBN (scanner "123") (scanner "123")) = "246"
+-> Teste #2:  output (somaBN (scanner "123") (scanner "12")) = "135"
+-> Teste #3:  output (somaBN (scanner "123") (scanner "987")) = "1110"
+-> Teste #4:  output (somaBN (scanner "-123") (scanner "-987")) = "-1110"
+-> Teste #5:  output (somaBN (scanner "-123") (scanner "22")) = "-101"
+-> Teste #6:  output (somaBN (scanner "-123") (scanner "222")) = "99"
+-> Teste #7:  output (somaBN (scanner "146") (scanner "-242")) = "-96"
+-> Teste #8:  output (somaBN (scanner "146") (scanner "-24")) = "122"
+-> Teste #10:  output (somaBN (scanner "123") (scanner "-123")) = "0"
+
+-}
+
 
 
 
 somaBN :: BigNumber -> BigNumber -> BigNumber
--- Caso Lista Acabou
 somaBN EmptyList EmptyList = EmptyList
--- Caso Lista Acabou e Numero Positivo
 somaBN EmptyList (BN x bn) = removeZeros $ somaBN (BN x bn) EmptyList
 somaBN (BN x bn) EmptyList = (BN x bn)
--- Caso Dois Numeros Negativos
 somaBN (Negative bnx) (Negative bny) = removeZeros $ Negative (somaBN bnx bny)
--- Caso Numero Positivo e Numero Negativo
 somaBN (Negative bnx) (BN y bny)
   | isGreaterBN bnx (BN y bny) = removeZeros $ Negative (subBN bnx (BN y bny))
   | otherwise = subBN (BN y bny) bnx
 somaBN (BN x bnx) (Negative bny) = removeZeros $ somaBN (Negative bny) (BN x bnx)
--- Caso Dois Numeros Positivos
 somaBN (BN x bnx) (BN y bny)
   | ((x + y) < 10 && (x + y) >= 0) = removeZeros $ (BN (mod (x+y) 10) (somaBN bnx bny))
   | (x + y) >= 10 = removeZeros $ (BN (mod (x+y) 10) (somaBN (somaBN bnx bny) (BN (div (x+y) 10) EmptyList)))
   | otherwise = EmptyList
 
 
--- subBn
+{- 
+-> SubBN -> Estado: Feito
+  -> Função que subtrai dois BigNumbers. Reduz sempre a uma das formas mais simples: soma de dois números positivos ou subtração de dois númeors positivos
+  -> subBN EmptyList EmptyList
+    -> Caso Listas Acabaram
+  -> subBN EmptyList (BN x bn)
+    -> Caso Lista Acabou e Número Positivo: Simétrico do valor positivo
+  -> subBN (BN x bn) EmptyList
+    -> Caso Número Positivo e Lista Acabou: Valor positivo
+  -> subBN (Negative bnx) (Negative bny)
+    -> Caso Dois Números Negativo: Soma do primeiro número com o simétrico do segundo número
+  -> subBN (Negative bnx) (BN y bny)
+    -> Caso Número Negativo e Número Positivo: Simétrico da soma dos valores absolutos
+  -> subBN (BN x bnx) (Negative bny)
+    -> Caso Número Positivo e Número Negativo: Soma dos valores absolutos
+  -> subBN (BN x bnx) (BN y bny)
+    -> Caso Dois Números Positivos: Subtração algarismo a algarismo
+
 -- Teste #1: output (subBN (scanner "255") (scanner "125")) = "130"
 -- Teste #2: output (subBN (scanner "100") (scanner "14")) = "86"
 -- Teste #3: output (subBN (scanner "5") (scanner "70")) = "-65"
@@ -92,20 +143,16 @@ somaBN (BN x bnx) (BN y bny)
 -- Teste #6: output (subBN (scanner "100") (scanner "-14")) = "114"
 -- Teste #7: output (subBN (scanner "-100") (scanner "14")) = "-114"
 
+-}
+
+
 subBN :: BigNumber -> BigNumber -> BigNumber
--- Caso Listas Acabaram
 subBN EmptyList EmptyList = EmptyList
--- Caso Lista Acabou e Numero Positivo
-subBN EmptyList (BN x bn) = removeZeros $ Negative (subBN (BN x bn) EmptyList)
-subBN (BN x bn) EmptyList
-  | x == 0 = EmptyList
-  | otherwise = (BN x bn)
--- Caso Dois Numeros Negativos
+subBN EmptyList (BN x bn) = removeZeros $ Negative (BN x bn)
+subBN (BN x bn) EmptyList = removeZeros $ (BN x bn)
 subBN (Negative bnx) (Negative bny) = removeZeros $ somaBN (Negative bnx) bny
--- Caso Numero Positivo e Numero Negativo
 subBN (Negative bnx) (BN y bny) = removeZeros $ Negative (somaBN bnx (BN y bny))
 subBN (BN x bnx) (Negative bny) = removeZeros $ somaBN (BN x bnx) bny
--- Dois Numeros Positivos
 subBN (BN x bnx) (BN y bny)
   | isEqualBN (BN x bnx) (BN y bny) = (BN 0 EmptyList)
   | isGreaterBN (BN x bnx) (BN y bny) && x < y = removeZeros $ (BN (mod (x-y) 10) (subBN (subBN bnx (BN 1 EmptyList)) bny))
