@@ -13,7 +13,7 @@ import Data.Maybe
   -> BN Int BigNumber : Representa os números positivos. Int: valor inteiro do algarismo
 
 -}
-data BigNumber = EmptyList | Negative BigNumber | BN Int BigNumber -- deriving (Show)
+data BigNumber = EmptyList | Negative BigNumber | BN Int BigNumber deriving (Show)
 
 {-
 
@@ -49,7 +49,7 @@ scannerHelper (c: xs) a
   -> Função que serve para transformar BigNumber em String
   -> output EmptyList -> Caso de Lista Vazia
   -> output (Negative bn) -> Caso do número negativo, chama a função auxiliar com o valor positivo
-  -> output (BN a bn)  ->  Caso do número positivo, chama função auxiliar 
+  -> output (BN a bn)  ->  Caso do número positivo, chama função auxiliar
 
 -> outputHelper -> Estado: Feito
   -> Funçao auxiliar que transforma BigNumber em String
@@ -74,9 +74,9 @@ outputHelper (BN a bn) str = outputHelper bn (chr (a + ord '0') : str)
 {-
 -> somaBN -> Estado: Feito
   -> Função que soma dois BigNumbers. Reduz sempre a uma das formas mais simples: soma de dois números positivos ou subtração de dois númeors positivos
-  -> somaBN EmptyList EmptyList 
+  -> somaBN EmptyList EmptyList
     -> Caso Lista Acabou
-  -> somaBN EmptyList (BN x bn) 
+  -> somaBN EmptyList (BN x bn)
   -> somaBN (BN x bn) EmptyList
     -> Caso Lista Acabou e Número Positivo: Dá o número positivo
   -> somaBN (Negative bnx) (Negative bny)
@@ -99,9 +99,6 @@ outputHelper (BN a bn) str = outputHelper bn (chr (a + ord '0') : str)
 
 -}
 
-
-
-
 somaBN :: BigNumber -> BigNumber -> BigNumber
 somaBN EmptyList EmptyList = EmptyList
 somaBN EmptyList (BN x bn) = removeZeros $ somaBN (BN x bn) EmptyList
@@ -117,7 +114,7 @@ somaBN (BN x bnx) (BN y bny)
   | otherwise = EmptyList
 
 
-{- 
+{-
 -> SubBN -> Estado: Feito
   -> Função que subtrai dois BigNumbers. Reduz sempre a uma das formas mais simples: soma de dois números positivos ou subtração de dois númeors positivos
   -> subBN EmptyList EmptyList
@@ -160,15 +157,65 @@ subBN (BN x bnx) (BN y bny)
   | otherwise = removeZeros $ Negative (subBN (BN y bny) (BN x bnx))
 
 
--- mulBN
 
+{-
+-> mulBN -> Estado: Feito
+  -> Funcão que multiplica 2 BigNumbers.
+     Reduz-se a multiplicação de 2 BigNumbers a uma série consecutiva de somas, sendo que cada argumento
+     é calculado a partir da multiplicação de apenas um algorismo de um dos BigNumbers pelo outro BigNumber.
+     De forma a efetuar estes cálculos, utilizam-se 2 funções auxiliares: mulBNAux e mulBNHelper.
+     -> mulBN EmptyList EmptyList = EmptyList
+      -> Caso de 2 EmptyList's
+     -> mulBN (BN x bnx) EmptyList = removeZeros $ BN x bnx
+      -> Caso de multiplicação de BigNumber por EmptyList: BigNumber inicial
+     -> mulBN EmptyList (BN x bnx) = removeZeros $ BN x bnx
+      -> Caso de multiplicação de EmptyList por BigNumber: BigNumber inicial
+     -> mulBN (Negative bnx) (Negative bny) = mulBN bnx bny
+      -> Caso de multiplicação de 2 BigNumbers negativos: Multiplicação do valor absoluto dos 2 BigNumbers
+     -> mulBN (Negative bnx) (BN y bny) = Negative (mulBN bnx (BN y bny))
+      -> Caso de multiplicação de BigNumber negativo por positvo: Simétrico da multiplicação do valor absoluto dos 2 BigNumbers
+     -> mulBN (BN x bnx) (Negative bny) = Negative (mulBN (BN x bnx) bny)
+      -> Caso de multiplicação de BigNumber positivo por negativo: Simétrico da multiplicação do valor absoluto dos 2 BigNumbers
+     -> mulBN (BN x bnx) (BN y bny) = removeZeros $ mulBNAux (BN x bnx) 0 (BN y bny)
+      -> Caso de multiplicação de 2 BigNumbers positivos: Multiplicação efetuada por mulBNAux com i = 0
 
--- output (mulBN (scanner "1") (scanner "0")) = "0"
--- output (mulBN (scanner "12") (scanner "0")) = "0"
--- output (mulBN (scanner "123") (scanner "123")) = "15129"
--- output (mulBN (scanner "-123") (scanner "123")) = "-15129"
--- output (mulBN (scanner "-999") (scanner "-999")) = "998001"
+  -> mulBNAux
+     Recebe os 2 BigNumbers necessários para a multiplicação e um valor Int que representa a posição do algorismo
+     do primeiro BigNumber, visto que, antes de se efetuar a soma, é necessário efetuar multiplicações por 10 dependentes
+     da posição do algorismo.
+     Esta função realiza a soma, chamando a mulBNHelper para calcular um dos argumentos e chamando-se a si própria, de forma recursiva,
+     para os argumentos seguintes.
+     -> mulBNAux EmptyList i (BN y bny) = EmptyList
+      -> Caso final
+     -> mulBNAux (BN x bnx) i (BN y bny) = somaBN (mulBNHelper x i (BN y bny) 0) (mulBNAux bnx (i+1) (BN y bny))
+      -> Caso 2 BigNumbers positivos com i >= 0: Soma de 2 elementos: resultado de mulBNHelper com carry inicial de 0
+                                                 e chamada recursiva com i incrementado por 1
 
+  -> mulBNHelper
+     Recebe 3 Int's, que representam, sucessivamente, um digito de um BigNumber, a sua posição relativamente a esse BigNumber,
+     e o carry entre multiplicações. Além disso, recebe o segundo BigNumber da multiplicação passado para mulBN.
+     Esta função calcula cada valor individual para a soma realizada em mulBNAux, chamando-se a si própria de forma recursiva,
+     até ter terminado a multiplicação do digito individual passado para a função pelo BigNumber.
+     -> mulBNHelper _ _ EmptyList c
+       -> Caso final: EmptyList se não existir carry ou um BigNumber com o valor de carry
+     -> mulBNHelper x i (BN y bny) c
+      -> Caso normal: 2 possibilidades
+        -> Se i > 0, ou seja, a posição de x em relação ao BigNumber inicial de mulBN não é a primeira:
+           Adicionam-se 0 ao inicio do BigNumber, o equivalente à multiplicação do BigNumber por 10, chamando-se a função recursivamente
+           diminuindo o i até atingit o valor de 0.
+        -> Se i = 0: Realiza-se a multiplicação de x por cada digito do BigNumber recebido, não se alterando o i,
+                     e calculando o carry necessário para cada chamada recursiva necessária.
+
+    mulBN
+-- Teste #2: output (mulBN (scanner "1") (scanner "0")) = "0"
+-- Teste #3: output (mulBN (scanner "12") (scanner "0")) = "0"
+-- Teste #4: output (mulBN (scanner "123") (scanner "123")) = "15129"
+-- Teste #5: output (mulBN (scanner "-123") (scanner "123")) = "-15129"
+-- Teste #6: output (mulBN (scanner "-999") (scanner "-999")) = "998001"
+
+    mulBNHelper
+-- Teste #1: output (somaBN (mulBNHelper 5 0 (scanner "123") 0) (mulBNHelper 4 1 (scanner "123") 0)) = "5535"
+-}
 
 mulBN :: BigNumber -> BigNumber -> BigNumber
 mulBN EmptyList EmptyList = EmptyList
@@ -183,8 +230,6 @@ mulBNAux :: BigNumber -> Int -> BigNumber -> BigNumber
 mulBNAux EmptyList i (BN y bny) = EmptyList
 mulBNAux (BN x bnx) i (BN y bny) = somaBN (mulBNHelper x i (BN y bny) 0) (mulBNAux bnx (i+1) (BN y bny))
 
--- output (somaBN (mulBNHelper 5 0 (scanner "123") 0) (mulBNHelper 4 1 (scanner "123") 0)) = "5535"
-
 mulBNHelper :: Int -> Int -> BigNumber -> Int -> BigNumber
 mulBNHelper _ _ EmptyList c
   | c == 0 = EmptyList
@@ -195,7 +240,9 @@ mulBNHelper x i (BN y bny) c
 
 
 -- divBN (scanner "123456") (scanner "12") = (BN 8 (BN 8 (BN 2 (BN 0 (BN 1 EmptyList)))),BN 0 EmptyList)
--- divBN (scanner "12345") (scanner "12")
+-- outputDiv (divBN (scanner "123456") (scanner "12")) = ("10288","0")
+-- outputDiv (divBN (scanner "123456") (scanner "13")) = ("9496","8")
+-- outputDiv (divBN (scanner "12") (scanner "16")) = ("0","12")
 
 divBN :: BigNumber -> BigNumber -> (BigNumber, BigNumber)
 divBN _ (BN 0 EmptyList) = error "Division 0"
@@ -203,44 +250,44 @@ divBN (BN x bnx) (BN y bny) = divBNHelper (flipBN (BN x bnx)) (BN y bny) (BN 0 E
 
 
 divBNHelper :: BigNumber -> BigNumber -> BigNumber -> BigNumber -> (BigNumber, BigNumber)
-divBNHelper EmptyList (BN y bny) (BN q bnq) (BN r bnr) 
+divBNHelper EmptyList (BN y bny) (BN q bnq) (BN r bnr)
   | isGreaterBN (BN y bny) (BN r bnr)  = ((BN q bnq), (BN r bnr))
   | otherwise = ( removeZeros $ somaBN (exp10BN (BN q bnq) 1) quoc, removeZeros rest)
   where (quoc, rest) = divBNinitial (BN y bny) oneBN (BN r bnr)
-divBNHelper (BN x bnx) (BN y bny) (BN q bnq) (BN r bnr) = 
+divBNHelper (BN x bnx) (BN y bny) (BN q bnq) (BN r bnr) =
   divBNHelper bnx (BN y bny) (removeZeros $ somaBN quoc (exp10BN (BN q bnq) 1)) (removeZeros $ somaBN (exp10BN rest 1) (BN x EmptyList))
   where (quoc, rest) = divBNinitial (BN y bny) oneBN (BN r bnr)
 
 -- divBNinitial (scanner "12") (scanner "1") (scanner "115")
 
 divBNinitial :: BigNumber -> BigNumber -> BigNumber -> (BigNumber, BigNumber)
-divBNinitial (BN x bnx) (BN i bni) (BN y bny) 
+divBNinitial (BN x bnx) (BN i bni) (BN y bny)
   | isEqualBN multi (BN y bny) = ((BN i bni), subBN (BN y bny) multi)
   | isGreaterBN multi (BN y bny) = ((subBN (BN i bni) oneBN), (subBN (BN y bny) (mulBN (BN x bnx) (subBN (BN i bni) oneBN))))
   | otherwise = divBNinitial (BN x bnx) (somaBN (BN i bni) oneBN) (BN y bny)
   where multi = mulBN (BN x bnx) (BN i bni)
 
 
--- safeDivBN 
+-- safeDivBN (com deriving Show)
 
+-- safeDivBN (scanner "17") (scanner "5") = Just (BN 3 EmptyList,BN 2 EmptyList)
+-- safeDivBN (scanner "17") (scanner "0") = Nothing
 
 safeDivBN :: BigNumber -> BigNumber -> Maybe (BigNumber, BigNumber)
 safeDivBN (BN x bnx) (BN 0 EmptyList) = Nothing
-safeDivBN (BN x bnx) (BN y bny) = Just $ divBN (BN x bnx) (BN y bny) 
+safeDivBN (BN x bnx) (BN y bny) = Just $ divBN (BN x bnx) (BN y bny)
 
 
 
 ----------------------
 -- Helper Functions --
 ----------------------
-
-
 --
 
-oneBN :: BigNumber 
+oneBN :: BigNumber
 oneBN = (BN 1 EmptyList)
 
-zeroBN :: BigNumber 
+zeroBN :: BigNumber
 zeroBN = (BN 0 EmptyList)
 
 
@@ -362,6 +409,6 @@ removeZerosAux (BN x bnx)
 fromBigNumber :: BigNumber -> Int
 fromBigNumber (BN x bnx) = fromBigNumberHelper (flipBN (BN x bnx))
 
-fromBigNumberHelper :: BigNumber -> Int 
+fromBigNumberHelper :: BigNumber -> Int
 fromBigNumberHelper (BN x EmptyList) = x
 fromBigNumberHelper (BN x bnx) = x * (10 ^ (lengthBN bnx)) + fromBigNumberHelper bnx
