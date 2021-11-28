@@ -244,6 +244,30 @@ mulBNHelper x i (BN y bny) c
 -- outputDiv (divBN (scanner "123456") (scanner "13")) = ("9496","8")
 -- outputDiv (divBN (scanner "12") (scanner "16")) = ("0","12")
 
+{-
+  divBN -> Estado: Feito
+    -> Função que divide dois BigNumbers Positivos e retorna (quociente, resto)
+    -> divBN _ (BN 0 EmptyList) 
+      -> Caso da divisão por zero: retorna um erro
+    -> divBN (BN x bnx) (BN y bny)
+      -> Caso De dois números positivos: Chama uma função auxiliar divBNHelper
+
+  -> divBNHelper -> Estado: Feito
+    -> divBNHelper EmptyList (BN y bny) (BN q bnq) (BN r bnr)
+      -> Caso Base: Retirar algarismos do dividendo ate ficar acabar o número, caso o número acabe acabar a divisao
+    -> divBNHelper (BN x bnx) (BN y bny) (BN q bnq) (BN r bnr)
+      -> Caso recursivo: Retirar algarismo do dividendo, somar com o resto * 10 e dividir pelo divisor, dando assim o quociente e o resto
+
+
+  -> divBNinitial -> Estado: Feito
+    -> Faz a divisão de dois BigNumber simples. Por exemplo, 43/7 = (6, 1) fazendo o calculo algarismo a algarismo.
+    -> divBNinitial (BN x bnx) (BN i bni) (BN y bny)
+      -> Caso Dois Números Positivos: procura a multiplicação mais alta antes do número pedido
+        -> Por exemplo, para encontrar o 43:  7*1 = 7, 7*2 = 14,  .... ,  7*6=42 -> Guarda o numero 6 e calcua o resto
+    
+    -> Teste #1: divBNinitial (scanner "7") (scanner "1") (scanner "43") = (BN 6 EmptyList,BN 1 EmptyList)
+    -> Teste #2: divBNinitial (scanner "12") (scanner "1") (scanner "115") = (BN 9 EmptyList,BN 7 EmptyList)
+-}
 divBN :: BigNumber -> BigNumber -> (BigNumber, BigNumber)
 divBN _ (BN 0 EmptyList) = error "Division 0"
 divBN (BN x bnx) (BN y bny) = divBNHelper (flipBN (BN x bnx)) (BN y bny) (BN 0 EmptyList) (BN 0 EmptyList)
@@ -258,7 +282,6 @@ divBNHelper (BN x bnx) (BN y bny) (BN q bnq) (BN r bnr) =
   divBNHelper bnx (BN y bny) (removeZeros $ somaBN quoc (exp10BN (BN q bnq) 1)) (removeZeros $ somaBN (exp10BN rest 1) (BN x EmptyList))
   where (quoc, rest) = divBNinitial (BN y bny) oneBN (BN r bnr)
 
--- divBNinitial (scanner "12") (scanner "1") (scanner "115")
 
 divBNinitial :: BigNumber -> BigNumber -> BigNumber -> (BigNumber, BigNumber)
 divBNinitial (BN x bnx) (BN i bni) (BN y bny)
@@ -270,8 +293,15 @@ divBNinitial (BN x bnx) (BN i bni) (BN y bny)
 
 -- safeDivBN (com deriving Show)
 
--- safeDivBN (scanner "17") (scanner "5") = Just (BN 3 EmptyList,BN 2 EmptyList)
--- safeDivBN (scanner "17") (scanner "0") = Nothing
+{-
+
+-> safeDivBN -> Estado: Feito
+  -> Divisao que retorna o valor do divisão ou nada caso divida por zero
+
+
+  -> Teste #1: safeDivBN (scanner "17") (scanner "5") = Just (BN 3 EmptyList,BN 2 EmptyList)
+  -> Teste #2: safeDivBN (scanner "17") (scanner "0") = Nothing
+-}
 
 safeDivBN :: BigNumber -> BigNumber -> Maybe (BigNumber, BigNumber)
 safeDivBN (BN x bnx) (BN 0 EmptyList) = Nothing
@@ -282,13 +312,17 @@ safeDivBN (BN x bnx) (BN y bny) = Just $ divBN (BN x bnx) (BN y bny)
 ----------------------
 -- Helper Functions --
 ----------------------
---
 
-oneBN :: BigNumber
-oneBN = (BN 1 EmptyList)
+
+-- zeroBN -> Representação do valor 0 em BigNumber
 
 zeroBN :: BigNumber
 zeroBN = (BN 0 EmptyList)
+
+-- oneBN -> Representação do valor 1 em BigNumber
+
+oneBN :: BigNumber
+oneBN = (BN 1 EmptyList)
 
 
 
