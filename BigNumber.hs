@@ -247,7 +247,7 @@ mulBNHelper x i (BN y bny) c
 {-
   divBN -> Estado: Feito
     -> Função que divide dois BigNumbers Positivos e retorna (quociente, resto)
-    -> divBN _ (BN 0 EmptyList) 
+    -> divBN _ (BN 0 EmptyList)
       -> Caso da divisão por zero: retorna um erro
     -> divBN (BN x bnx) (BN y bny)
       -> Caso De dois números positivos: Chama uma função auxiliar divBNHelper
@@ -264,7 +264,7 @@ mulBNHelper x i (BN y bny) c
     -> divBNinitial (BN x bnx) (BN i bni) (BN y bny)
       -> Caso Dois Números Positivos: procura a multiplicação mais alta antes do número pedido
         -> Por exemplo, para encontrar o 43:  7*1 = 7, 7*2 = 14,  .... ,  7*6=42 -> Guarda o numero 6 e calcua o resto
-    
+
     -> Teste #1: divBNinitial (scanner "7") (scanner "1") (scanner "43") = (BN 6 EmptyList,BN 1 EmptyList)
     -> Teste #2: divBNinitial (scanner "12") (scanner "1") (scanner "115") = (BN 9 EmptyList,BN 7 EmptyList)
 -}
@@ -298,7 +298,6 @@ divBNinitial (BN x bnx) (BN i bni) (BN y bny)
 -> safeDivBN -> Estado: Feito
   -> Divisao que retorna o valor do divisão ou nada caso divida por zero
 
-
   -> Teste #1: safeDivBN (scanner "17") (scanner "5") = Just (BN 3 EmptyList,BN 2 EmptyList)
   -> Teste #2: safeDivBN (scanner "17") (scanner "0") = Nothing
 -}
@@ -324,17 +323,19 @@ zeroBN = (BN 0 EmptyList)
 oneBN :: BigNumber
 oneBN = (BN 1 EmptyList)
 
-
+-- exp10BN -> BN * 10 ^ n, sendo BN o BigNumber e n o Int.
 
 exp10BN :: BigNumber -> Int -> BigNumber
 exp10BN (BN x bnx) 0 = (BN x bnx)
 exp10BN (Negative bn) i = Negative (exp10BN bn i)
 exp10BN (BN x bnx) i = exp10BN (BN 0 (BN x bnx)) (i-1)
 
+-- outputDiv -> Mostrar a divisão em formato de string.
+
 outputDiv :: (BigNumber, BigNumber) -> (String, String)
 outputDiv ((BN x bnx), (BN y bny)) = (output (BN x bnx), output (BN y bny))
 
--- isEqualBN
+-- isEqualBN -> Verifica se 2 BigNumbers são iguais.
 
 -- Teste #1: isEqualBN (scanner "123") (scanner "123") = True
 -- Teste #2: isEqualBN (scanner "-123") (scanner "-123") = True
@@ -354,7 +355,7 @@ isEqualBN _ _ = False
 
 
 -- isGreaterBN -> Estado: Feito
---    Return true if first argument is greater than the second, false otherwise
+--    Verifica se BigNumber é superior a outro BigNumber.
 
 -- Teste #1: isGreaterBN (scanner "123") (scanner "123") = False
 -- Teste #2: isGreaterBN (scanner "123") (scanner "12") = True
@@ -384,7 +385,7 @@ isGreaterBN (BN x bnx) (BN y bny)
   | otherwise = isGreaterBN bnx bny
 
 -- lengthBN -> Estado: Feito
---    Return the length of the BigNumber
+--    Retorna o número de algarismos num BigNumber.
 
 -- Teste #1: lengthBN (scanner "-123") = "3"
 -- Teste #2: lengthBN (scanner "1123") = "4"
@@ -396,12 +397,12 @@ lengthBN EmptyList = 0
 lengthBN (Negative bn) = lengthBNHelper bn 0
 lengthBN (BN x bn) = lengthBNHelper (BN x bn) 0
 
-
 lengthBNHelper :: BigNumber -> Int -> Int
 lengthBNHelper EmptyList n = n
 lengthBNHelper (BN v bn) n = lengthBNHelper bn (n+1)
 
 -- flipBN -> Estado: Feito
+--  Inverte a posição dos algarismos de um BigNumber.
 
 -- Teste #1: flipBN(scanner "123") = BN 1 (BN 2 (BN 3 EmptyList))
 -- Teste #2: flipBN(scanner "-123") = Negative (BN 1 (BN 2 (BN 3 EmptyList)))
@@ -418,7 +419,7 @@ flipBNHelper (BN x bnx) (BN y EmptyList) = flipBNHelper bnx (BN x (BN y EmptyLis
 flipBNHelper (BN x bnx) (BN y bny) = flipBNHelper bnx (BN x (BN y bny))
 
 -- removeZeros -> Estado:
--- Return BigNumber without unnecessary zeros
+--  Remove zeros desnecessários de um BigNumber.
 
 -- Teste #1: output (removeZeros (scanner "0")) = "0"
 -- Teste #2 output (removeZeros (scanner "0123")) = "123"
@@ -437,8 +438,7 @@ removeZerosAux (BN x bnx)
   | (x == 0 && lengthBN(BN x bnx) > 1) = removeZerosAux bnx
   | otherwise = BN x bnx
 
-
-
+-- Transforma BigNumber em Int.
 
 fromBigNumber :: BigNumber -> Int
 fromBigNumber (BN x bnx) = fromBigNumberHelper (flipBN (BN x bnx))
