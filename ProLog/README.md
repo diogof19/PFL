@@ -15,7 +15,5 @@ valid_moves(+GameState, -ListOfMoves)
 initial_state(+Size, -GameState) -> Size vai ser igual = 9 ?????????????? Perguntar ao stor
 game_over(+GameState, -Winner)
 
-
-
 value(+GameState, +Player, -Value)
 choose_move(+GameState, +Level, -Move)
