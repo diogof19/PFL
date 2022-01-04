@@ -1,4 +1,4 @@
-GameState(+TurnNo, +Board, +Player). 
+GameState(+Size, +TurnNo, +Board, +Player).
 
 -- Funçao que conta o numero de peças
 
