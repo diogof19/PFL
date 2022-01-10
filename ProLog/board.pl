@@ -43,13 +43,8 @@ Player 1 = W
 Player 2 = B
 */
 
-count_pieces(Board, Player, Count):-
-    Player =:= 1,
-    count_pieces_aux(Board, 'W', 0, Count).
-
-count_pieces(Board, Player, Count):-
-    Player =:= 2,
-    count_pieces_aux(Board, 'B', 0, Count).
+count_pieces(Board, Piece, Count):-
+    count_pieces_aux(Board, Piece, 0, Count).
 
 count_pieces_aux([], _, Count, Count).
 count_pieces_aux([Row | List], Piece, Acc, Count):-
@@ -60,3 +55,7 @@ count_pieces_aux([Row | List], Piece, Acc, Count):-
 count_pieces_row(Row, Piece, Count) :-
     include(=(Piece), Row, Pieces),
     length(Pieces, Count).
+
+center_board(Size, [Center1, Center2]):-
+    Center1 is div(Size, 2),
+    Center2 is div(Size, 2).

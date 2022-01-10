@@ -6,14 +6,34 @@ move(+GameState, +Move, -NewGameState)
 
 move(Size-TurnNo-Board-Player, Move, Size-NewTurnNo-NewBoard-NewPlayer):-
     valid_positions(Board, Player, Move),
-    execute_move(Board, Player, Move, NewBoard),
+    center_board(Size, Center),
+    execute_move(Board, Player, Move, NewBoard, Center),
     NewTurnNo is TurnNo + 1,
     NewPlayer is (Player mod 2) + 1.
 
-execute_move(Board, Player, [Start, End], NewBoard):-
+execute_move(Board, Player, [Start, End], NewBoard, Center):-
+    Player =:= 1,
+    same_position(Start, Center),
+    replace_piece(Board, Start, ' ', TempBoard),
+    replace_piece(TempBoard, End, 'w', NewBoard).
+
+execute_move(Board, Player, [Start, End], NewBoard, Center):-
+    Player =:= 2,
+    same_position(Start, Center),
+    replace_piece(Board, Start, ' ', TempBoard),
+    replace_piece(TempBoard, End, 'b', NewBoard).
+
+execute_move(Board, Player, [Start, End], NewBoard, _):-
     Player =:= 1,
     replace_piece(Board, Start, ' ', TempBoard),
     replace_piece(TempBoard, End, 'W', NewBoard).
+
+execute_move(Board, Player, [Start, End], NewBoard, _):-
+    Player =:= 2,
+    replace_piece(Board, Start, ' ', TempBoard),
+    replace_piece(TempBoard, End, 'B', NewBoard).
+
+
 
 replace_piece(Board, [RowPos, ColPos], Piece, NewBoard):-
     nth0(RowPos, Board, Row),
@@ -56,3 +76,32 @@ valid_move([S1, S2], [E1, E2]):-
     C1 is E1-S1,
     equal_2(C1),
     equal_1(C2).
+
+
+same_position([H1, L1], [H1 , L1]).
+
+
+
+
+
+game_over(_-_-Board-_, Winner):-
+    count_pieces(Board, 'w', C),
+    C >= 1,
+    Winner is 1.
+
+game_over(_-_-Board-_, Winner):-
+    count_pieces(Board, 'b', C),
+    C >= 1,
+    Winner is 2.
+
+game_over(_-_-Board-_, Winner):-
+    count_pieces(Board, 'W', C),
+    C =:= 0,
+    Winner is 2.
+
+game_over(_-_-Board-_, Winner):-
+    count_pieces(Board, 'B', C),
+    C =:= 0,
+    Winner is 1.
+
+game_over(_, 0).
