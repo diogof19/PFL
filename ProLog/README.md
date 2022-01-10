@@ -1,5 +1,7 @@
 GameState(+Size, +TurnNo, +Board, +Player).
 
+ADICIONAR TIPO DE JOGADOR A PLAYER (HUMAN OR COMPUTER)
+
 -- Funçao que conta o numero de peças
 
 CountPieces(+Board, +Player, -Count).
