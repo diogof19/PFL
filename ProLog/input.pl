@@ -6,8 +6,13 @@ Input: a1. b3.
 Move = [[0, 0], [2, 1]]
 */
 
-read_move_input(game_state(_, _, Board, Player, _, _), Move):-
+read_move_input(game_state(_, TurnNo, Board, Player, _, _), Move):-
     repeat,
+    nl,
+    write('Turn: '),
+    write(TurnNo), nl,
+    write('Player: '),
+    write(Player), nl,
     write('Input piece position (Ex: a1): '),
     read(StartI),
     atom_chars(StartI, StartPos),
@@ -23,7 +28,7 @@ valid_input(Board, Player, Move):-
 
 valid_input(_, _, _):-
     write('Non valid positions.'),
-    nl,
+    nl, nl,
     fail.
     
 
@@ -53,22 +58,43 @@ change_code([C1, C2, C3], [I2, I1]):-
 read_start_input(-P1, -P2, -Size)
 */
 
-read_start_input(P1, P2, Size):-
-    read_player_type(1, P1),
-    read_player_type(2, P2),
+read_start_input(Player1Type, Player2Type, Size):-
+    read_game_type(Player1Type, Player2Type),
     read_board_size(Size).
 
-read_player_type(Number, Type):-
+read_game_type(Player1Type, Player2Type):-
+    write_game_options(Option),
+    option_to_player_types(Option, Player1Type, Player2Type).
+
+write_game_options(Option):-
     repeat,
-    write('Choose Player '),
-    write(Number),
-    write(' type (h or pc): '),
-    read(Type),
-    player_type(Type),
+    write('Choose game type:'), nl,
+    write('a - human vs human'), nl,
+    write('b - human vs random bot'), nl,
+    write('c - random bot vs human'), nl,
+    write('d - random bot vs random bot'), nl,
+    write('e - human vs greedy bot'), nl,
+    write('f - greedy bot vs human'), nl,
+    write('g - random bot vs greedy bot'), nl,
+    write('h - greedy bot vs random bot'), nl,
+    write('i - greedy bot vs greedy bot'), nl,
+    write('Type: '),
+    read(Option),
+    char_code(Option, Char),
+    Char >= 97,
+    Char =< 105,
     !.
 
-player_type(h).
-player_type(pc).
+option_to_player_types(a, human, human).
+option_to_player_types(b, human, computer-0).
+option_to_player_types(c, computer-0, human).
+option_to_player_types(d, computer-0, computer-0).
+option_to_player_types(e, human, computer-1).
+option_to_player_types(f, computer-1, human).
+option_to_player_types(g, computer-0, computer-1).
+option_to_player_types(h, computer-1, computer-0).
+option_to_player_types(i, computer-1, computer-1).
+
 
 read_board_size(Size):-
     repeat,
