@@ -6,7 +6,7 @@ move(+GameState, +Move, -NewGameState)
 */
 
 
-move(game_state(Size,TurnNo,Board,Player,_), Move, game_state(Size,NewTurnNo,NewBoard,NewPlayer,_)):-
+move(game_state(Size, TurnNo, Board, Player, GameType), Move, game_state(Size,NewTurnNo,NewBoard,NewPlayer,GameType)):-
     valid_positions(Board, Player, Move),
     center_board(Size, Center),
     execute_move(Board, Player, Move, NewBoard, Center),
@@ -67,12 +67,12 @@ equal_1(V):- V =:= -1.
 equal_2(V):- V =:= 2.
 equal_2(V):- V =:= -2.
 
-moves(game_state(Size,TurnNo,Board,Player,_), Moves):-
+moves(game_state(Size, TurnNo, Board, Player, GameType), Moves):-
     Limit is Size-1,
-    findall(X0-Y0-X-Y, (between(0, Limit, X0),
+    findall([[X0, Y0], [X, Y]], (between(0, Limit, X0),
     between(0, Limit, Y0),
     between(0, Limit, X),
-    between(0, Limit, Y), valid_move([X0, Y0], [X, Y])), Moves).
+    between(0, Limit, Y), move(game_state(Size, TurnNo, Board, Player, GameType), [[X0, Y0], [X, Y]], _)), Moves).
 
 valid_move([S1, S2], [E1, E2]):-
     C2 is E2-S2,
