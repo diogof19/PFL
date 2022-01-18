@@ -20,3 +20,14 @@ initial_state(Size, Size-0-Board-1):-
     create_board(Size, Board).
 
 
+game_cycle(GameState):-
+    game_over(GameState, Winner),
+    !,
+    write(Winner).
+
+game_cycle(game_state(Size, TurnNo, Board, Player,  Player1Type, Player2Type)):-
+    PlayerTypePos is Player + 4,
+    arg(PlayerTypePos, game_state(Size, TurnNo, Board, Player,  Player1Type, Player2Type), PlayerType),
+    choose_move(game_state(Size, TurnNo, Board, Player,  Player1Type, Player2Type), PlayerType, Move).
+
+

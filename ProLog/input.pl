@@ -6,14 +6,26 @@ Input: a1. b3.
 Move = [[0, 0], [2, 1]]
 */
 
-read_move_input(Move):-
+read_move_input(game_state(_, _, Board, Player, _, _), Move):-
+    repeat,
     write('Input piece position (Ex: a1): '),
     read(StartI),
     atom_chars(StartI, StartPos),
     write('Input piece destination (Ex: b3): '),
     read(EndI),
     atom_chars(EndI, EndPos),
-    input_to_move(StartPos, EndPos, Move).
+    input_to_move(StartPos, EndPos, Move),
+    valid_input(Board, Player, Move),
+    !.
+
+valid_input(Board, Player, Move):-
+    valid_positions(Board, Player, Move).
+
+valid_input(_, _, _):-
+    write('Non valid positions.'),
+    nl,
+    fail.
+    
 
 % Move = [[StartRow, StartCol], [EndRow, EndCol]]
 input_to_move(Start, End, [StartPos, EndPos]):-
