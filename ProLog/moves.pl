@@ -43,7 +43,7 @@ valid_positions(Board, Player, [Start, End]):-
     player_to_piece(Player, Piece),
     valid_move(Start, End),
     check_piece(Board, Piece, Start),
-    \+(check_piece(Board, Pie, End)).
+    \+(check_piece(Board, Piece, End)).
 
 check_piece(Board, Piece, [RowPos, ColPos]):-
     nth0(RowPos, Board, Row),
@@ -108,7 +108,7 @@ choose_move(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), c
 
 choose_move(GameState, computer-1, Move):-
     moves(GameState, Moves),
-    setof(Value-Move, NewGameState^( member(Move, Moves), move(GameState, Move, NewGameState), value(NewGameState, Value)), [_-Move|_]),
+    setof(Value-Move, NewGameState^( member(Move, Moves),  move(GameState, Move, NewGameState), value(NewGameState, Value)), [_-Move|_]),
     write_computer(GameState, Move).
 
 write_computer(game_state(_, TurnNo, _, _, _, _), [Start, End]):-
@@ -123,46 +123,47 @@ write_computer(game_state(_, TurnNo, _, _, _, _), [Start, End]):-
     write(ELetter), write(ENumber), 
     nl.
 
-value(GameState, -1000):-
+value(GameState, -1000.0):-
     game_over(GameState, _),
     !.
 
 value(GameState, Value):-
     value_number(GameState, V1),
-    value_initial_move(GameState, V2),
-    value_poiting_center(GameState, V3),
+    value_piece_center(GameState, V2),
+    value_pointing_center(GameState, V3),
     value_piece_difference(GameState, V4),
-    Value is V1 + V2 + V3 + V4.
+    value_center(GameState, V5),
+    Value is V1 + V2 + V3 + V4 + V5.
 
-value_number(game_state(_, _, Board, Player, _, _), V):-
+
+value_piece_center(game_state(Size, _, Board, Player, _, _), -0.25):-
+    center_board(Size, Center),
+    player_to_piece(Player, Piece),
+    check_piece(Board, Piece, Center),
+    !.
+
+value_piece_center(_, 0).
+
+value_number(game_state(Size, _, Board, Player, _, _), V):-
     player_to_piece(Player, Piece),
     count_pieces(Board, Piece, C),
-    V is -0.15 * C.
+    V is -0.10 * (C/ Size).
 
-value_initial_move(game_state(_, _, [_|T], Player, _, _), Value):-
-    Player =:= 1,
-    count_pieces(T, 'W', NotInitial),
-    Value is -0.05 * NotInitial.
 
-value_initial_move(game_state(_, _, Board, Player, _, _), Value):-
-    Player =:= 2,
-    last(Board, BRow),
-    delete(Board, BRow, PBoard),
-    count_pieces(PBoard, 'B', NotInitial),
-    Value is -0.05 * NotInitial.
-
-value_poiting_center(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Value):-
+value_pointing_center(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Value):-
     moves(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Moves),
-    value_poiting_center_aux(Size, Moves, 0, N),
-    Value is -0.3 * N.
+    value_pointing_center_aux(Size, Moves, 0, N),
+    player_to_piece(Player, Piece),
+    count_pieces(Board, Piece, C),
+    Value is -0.2 * (N/C),!.
 
-value_poiting_center_aux(_, [], Number, Number).
-value_poiting_center_aux(Size, [[_, End]|T], Acc, Number):-
+value_pointing_center_aux(_, [], Number, Number).
+value_pointing_center_aux(Size, [[_, End]|T], Acc, Number):-
     center_board(Size, End),
     NewAcc is Acc + 1,
-    value_poiting_center_aux(Size, T, NewAcc, Number).
-value_poiting_center_aux(Size, [_|T], Acc, Number):-
-    value_poiting_center_aux(Size, T, Acc, Number).
+    value_pointing_center_aux(Size, T, NewAcc, Number).
+value_pointing_center_aux(Size, [_|T], Acc, Number):-
+    value_pointing_center_aux(Size, T, Acc, Number).
 
 value_piece_difference(game_state(_, _, Board, Player, _, _), Value):-
     player_to_piece(Player, CurrPiece),
@@ -170,31 +171,51 @@ value_piece_difference(game_state(_, _, Board, Player, _, _), Value):-
     OtherPlayer is (Player mod 2) + 1,
     player_to_piece(OtherPlayer, OtherPiece),
     count_pieces(Board, OtherPiece, OtherPlayerPieces),
-    Value is -0.3 * (CurrPlayerPieces - OtherPlayerPieces).
+    Value is -0.2 * ((CurrPlayerPieces - OtherPlayerPieces)/CurrPlayerPieces).
 
 value_center(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Value):-
-    center_board(Board, Center).
+    center_board(Size, Center),
+    player_to_piece(Player, Piece),
+    get_all_pieces(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Piece, Pieces),
+    calculate_dist(Pieces, Center, Sum),
+    count_pieces(Board, Piece, Num),
+    dist([0, 0], Center, D),
+    Value is -0.25 * (Sum/(D * Num)).
+
 
 /*
- -0.15 * NumberPieces +  -0.05* (Peça que ja tenha saido da posiçao inicial) + -0.20 * (Ir para o centro) ([5, 5] [sqrt((7-5)^2 + (6-5)^2)] / -0.20)
- -0.3 * (1 peça que esta a apontar para o centro) + -0.3 * (Diferença de peças entre adversario e jogador) ([5, 5] [sqrt((9-5)^2 + (9-5)^2)] / -0.20)
+ -0.15 * NumberPieces -0.25 * (Ir para o centro) -0.20 *( Uma peça no centro)
+ -0.20 * (1 peça que esta a apontar para o centro) + -0.20 * (Diferença de peças entre adversario e jogador) 
 */
 
+calculate_dist([], _, 0).
+calculate_dist([P|Positions], Center, Value):-
+    dist(P, Center, D1),
+    calculate_dist(Positions, Center, D2),
+    Value is D1 + D2.
 
+get_all_pieces(game_state(Size, _, Board, _, _, _), Piece, Pieces):-
+    my_flatten(Board, B),
+    get_all_pieces_aux(Size, B, Piece, 0, Pieces),
+    !.
 
-get_all_pieces(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Player2Type), Piece, Pieces):-
-    flatten(Board, B),
-    get_all_pieces_aux(Size, B, Piece, 0, Pieces).
+get_all_pieces_aux(_, [], _, _, []).
 
-get_all_pieces_aux(Size, [Piece | T], Piece, Acc, Pieces):-
-    I is Acc/Size,
-    J is Acc mod Size,
+get_all_pieces_aux(Size, [Piece | T], Piece, Acc, [[I, J] | Pieces]):-
+    I is div(Acc, Size),
+    J is mod(Acc, Size),
     NewAcc is Acc + 1,
-    get_all_pieces_aux(Size, T, Piece, NewAcc, [[I, J]|Pieces]).
+    get_all_pieces_aux(Size, T, Piece, NewAcc, Pieces).
 
 get_all_pieces_aux(Size, [_ | T], Piece, Acc, Pieces):-
     NewAcc is Acc + 1,
     get_all_pieces_aux(Size, T, Piece, NewAcc, Pieces).
+
+
+my_flatten([], []).
+my_flatten([H|T], L):-
+    my_flatten(T, LT),
+    append(H, LT, L).
 
 
 player_to_piece(1, 'W').
