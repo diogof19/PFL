@@ -36,15 +36,6 @@ game_cycle(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type)):-
     !,
     game_cycle(NewGameState).
 
-/*
-value(GameState, Value):-
-    value_number(GameState, V1),
-    value_initial_move(GameState, V2),
-    value_poiting_center(GameState, V3),
-    value_piece_difference(GameState, V4),
-    value_center(GameState, V5),
-    Value is V1 + V2 + V3 + V4 + V5.
-*/
 congratulations(Winner):-
     nl,
     write('Congratulations!'), nl,

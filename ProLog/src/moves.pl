@@ -54,7 +54,7 @@ equal_1(V):- V =:= -1.
 equal_2(V):- V =:= 2.
 equal_2(V):- V =:= -2.
 
-moves(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Moves):-
+valid_moves(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Moves):-
     Limit is Size-1,
     findall([[X0, Y0], [X, Y]], (between(0, Limit, X0),
     between(0, Limit, Y0),
@@ -102,12 +102,12 @@ choose_move(GameState, human, Move):-
     read_move_input(GameState, Move).
 
 choose_move(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), computer-0, Move):-
-    moves(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Moves),
+    valid_moves(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Moves),
     random_member(Move, Moves),
     write_computer(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Move).
 
 choose_move(GameState, computer-1, Move):-
-    moves(GameState, Moves),
+    valid_moves(GameState, Moves),
     setof(Value-Move, NewGameState^( member(Move, Moves),  move(GameState, Move, NewGameState), value(NewGameState, Value)), [_-Move|_]),
     write_computer(GameState, Move).
 
@@ -151,7 +151,7 @@ value_number(game_state(Size, _, Board, Player, _, _), V):-
 
 
 value_pointing_center(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Value):-
-    moves(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Moves),
+    valid_moves(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Moves),
     value_pointing_center_aux(Size, Moves, 0, N),
     player_to_piece(Player, Piece),
     count_pieces(Board, Piece, C),
@@ -171,6 +171,12 @@ value_piece_difference(game_state(_, _, Board, Player, _, _), Value):-
     OtherPlayer is (Player mod 2) + 1,
     player_to_piece(OtherPlayer, OtherPiece),
     count_pieces(Board, OtherPiece, OtherPlayerPieces),
+    give_value_piece_difference(CurrPlayerPieces, OtherPlayerPieces, Value).
+
+give_value_piece_difference(CurrPlayerPieces, OtherPlayerPieces, 0):-
+    OtherPlayerPieces >= CurrPlayerPieces.
+
+give_value_piece_difference(CurrPlayerPieces, OtherPlayerPieces, Value):-
     Value is -0.2 * ((CurrPlayerPieces - OtherPlayerPieces)/CurrPlayerPieces).
 
 value_center(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), Value):-
@@ -183,10 +189,6 @@ value_center(game_state(Size, TurnNo, Board, Player, Player1Type, Player2Type), 
     Value is -0.25 * (Sum/(D * Num)).
 
 
-/*
- -0.15 * NumberPieces -0.25 * (Ir para o centro) -0.20 *( Uma peça no centro)
- -0.20 * (1 peça que esta a apontar para o centro) + -0.20 * (Diferença de peças entre adversario e jogador) 
-*/
 
 calculate_dist([], _, 0).
 calculate_dist([P|Positions], Center, Value):-
