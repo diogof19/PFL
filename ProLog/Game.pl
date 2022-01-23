@@ -7,8 +7,8 @@
 play/0
 */
 play:-
-    read_start_input(Player1Type, Player2Type, Size),
-    initial_state(Player1Type, Player2Type, Size, GameState),
+    read_board_size(Size),
+    initial_state(Size, GameState),
     display_game(GameState),
     game_cycle(GameState).
 
@@ -17,7 +17,8 @@ initial_state(+Size, -GameState)
 game_state(+TurnNo, +Board, +Player, +Size)
 */
 
-initial_state(Player1Type, Player2Type, Size, game_state(Size, 1, Board, 1, Player1Type, Player2Type)):-
+initial_state(Size, game_state(Size, 1, Board, 1, Player1Type, Player2Type)):-
+    read_game_type(Player1Type, Player2Type),
     create_board(Size, Board).
 
 game_cycle(GameState):-

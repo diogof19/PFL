@@ -58,10 +58,6 @@ change_code([C1, C2, C3], [I2, I1]):-
 read_start_input(-P1, -P2, -Size)
 */
 
-read_start_input(Player1Type, Player2Type, Size):-
-    read_game_type(Player1Type, Player2Type),
-    read_board_size(Size).
-
 read_game_type(Player1Type, Player2Type):-
     write_game_options(Option),
     option_to_player_types(Option, Player1Type, Player2Type).
